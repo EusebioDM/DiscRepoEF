@@ -9,13 +9,13 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Generic_Disconnected_Repo
 {
-    public class EntityRepository<TEntity> where TEntity : class 
+    public class Repository<TEntity> where TEntity : class 
     {
         private Func<DbContext, DbSet<TEntity>> getDBSetFunc;
         private IDesignTimeDbContextFactory<DbContext> contextFactory;
         private EntityUpdater<TEntity> entityUpdater;
 
-        public EntityRepository(Func<DbContext, DbSet<TEntity>> getDBSetFunc, IDesignTimeDbContextFactory<DbContext> contextFactory)
+        public Repository(Func<DbContext, DbSet<TEntity>> getDBSetFunc, IDesignTimeDbContextFactory<DbContext> contextFactory)
         {
             this.getDBSetFunc = getDBSetFunc;
             this.contextFactory = contextFactory;
