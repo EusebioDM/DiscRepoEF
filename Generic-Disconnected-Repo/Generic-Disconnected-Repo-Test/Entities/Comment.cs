@@ -12,7 +12,7 @@ namespace Generic_Disconnected_Repo_Test.Entities
 
         protected bool Equals(Comment other)
         {
-            return Id.Equals(other.Id);
+            return string.Equals(Message, other.Message) && Id.Equals(other.Id);
         }
 
         public override bool Equals(object obj)
@@ -25,7 +25,10 @@ namespace Generic_Disconnected_Repo_Test.Entities
 
         public override int GetHashCode()
         {
-            return Id.GetHashCode();
+            unchecked
+            {
+                return ((Message != null ? Message.GetHashCode() : 0) * 397) ^ Id.GetHashCode();
+            }
         }
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Generic_Disconnected_Repo
 {
-    public class Repository<TEntity> where TEntity : class 
+    public class Repository<TEntity> where TEntity : class
     {
         private Func<DbContext, DbSet<TEntity>> getDBSetFunc;
         private IDesignTimeDbContextFactory<DbContext> contextFactory;
@@ -104,10 +104,10 @@ namespace Generic_Disconnected_Repo
         {
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
-                TEntity toReturn = context.Find<TEntity>(ids);
+                TEntity toReturn = Helper<TEntity>.GetEageredLoadedEntity(context, ids);
                 if (toReturn == null)
                 {
-                    throw new DataAccessException($"Object of id { GetKeysToString(ids) } does not exists in database.");
+                    throw new DataAccessException($"Object of id {GetKeysToString(ids)} does not exists in database.");
                 }
 
                 return toReturn;
@@ -135,7 +135,11 @@ namespace Generic_Disconnected_Repo
         {
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
-                return Set(context).ToList();
+                // TODO: Find a better way to get all entities
+                return Set(context).ToList().Select(e => context.Entry(e))
+                    .Select(Helper<TEntity>.GetKeys)
+                    .Select(e => Helper<TEntity>.GetEageredLoadedEntity(context, e.Keys.ToArray()))
+                    .ToList();
             }
         }
 
@@ -175,11 +179,10 @@ namespace Generic_Disconnected_Repo
         private TEntity GetEntityFromRepo(DbContext context, TEntity localEntity)
         {
             EntityEntry entry = context.Entry(localEntity);
-            EntityKeys key = HelperFunctions<TEntity>.GetKeys(entry);
+            EntityKeys key = Helper<TEntity>.GetKeys(entry);
             return context.Find<TEntity>(key.Keys.ToArray());
         }
 
         private DbSet<TEntity> Set(DbContext context) => getDBSetFunc.Invoke(context);
-
     }
 }

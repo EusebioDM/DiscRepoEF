@@ -57,7 +57,7 @@ namespace Generic_Disconnected_Repo
         {
             EntityEntry current = node.Entry;
             EntityEntry fatherNode = node.SourceEntry;
-            entitiesThatShouldBeInUpdate.Add(HelperFunctions<TEntity>.GetKeys(current));
+            entitiesThatShouldBeInUpdate.Add(Helper<TEntity>.GetKeys(current));
 
             if (EntryExistsInChangeTracker(context, current)) // Entity is already being tracked in a different node so the current context cant track it
             {
@@ -99,7 +99,7 @@ namespace Generic_Disconnected_Repo
         private bool EntryExistsInChangeTracker(DbContext context, EntityEntry entry)
         {
             IEnumerable<EntityEntry> entriesInChangeTracker = context.ChangeTracker.Entries();
-            bool exists = entriesInChangeTracker.Any(e => HelperFunctions<TEntity>.EntriesAreEqual(e, entry));
+            bool exists = entriesInChangeTracker.Any(e => Helper<TEntity>.EntriesAreEqual(e, entry));
             return exists;
         }
 
@@ -110,7 +110,7 @@ namespace Generic_Disconnected_Repo
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
                 EntityEntry entry = context.Entry(entity);
-                EntityKeys key = HelperFunctions<TEntity>.GetKeys(entry);
+                EntityKeys key = Helper<TEntity>.GetKeys(entry);
                 TEntity root = context.Find<TEntity>(key.Keys.ToArray());
                 RemoveEntitiesNotInUpdateRecusively(context, context.Entry(root), new HashSet<EntityKeys>());
                 context.SaveChanges();
@@ -119,7 +119,7 @@ namespace Generic_Disconnected_Repo
 
         private void RemoveEntitiesNotInUpdateRecusively(DbContext context, EntityEntry currentEntry, HashSet<EntityKeys> alreadyTraversed)
         {
-            EntityKeys keys = HelperFunctions<TEntity>.GetKeys(currentEntry);
+            EntityKeys keys = Helper<TEntity>.GetKeys(currentEntry);
             bool haventTraversedThisEntity = !alreadyTraversed.Contains(keys);
             if (haventTraversedThisEntity)
             {
@@ -152,7 +152,7 @@ namespace Generic_Disconnected_Repo
             foreach (dynamic entity in entitiesThatNeedToBeFiltered)
             {
                 EntityEntry entry = context.Entry(entity);
-                EntityKeys entityKey = HelperFunctions<TEntity>.GetKeys(entry);
+                EntityKeys entityKey = Helper<TEntity>.GetKeys(entry);
                 if (!entitiesThatShouldBeInUpdate.Contains(entityKey))
                 {
                     toBeDeleted.Add(entity);

@@ -23,7 +23,7 @@
 
         protected bool Equals(TeamUser other)
         {
-            return Equals(Team, other.Team) && Equals(User, other.User);
+            return string.Equals(TeamName, other.TeamName) && string.Equals(SportName, other.SportName) && Equals(Team, other.Team) && Equals(User, other.User) && string.Equals(UserName, other.UserName);
         }
 
         public override bool Equals(object obj)
@@ -38,7 +38,12 @@
         {
             unchecked
             {
-                return ((Team != null ? Team.GetHashCode() : 0) * 397) ^ (User != null ? User.GetHashCode() : 0);
+                int hashCode = (TeamName != null ? TeamName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (SportName != null ? SportName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Team != null ? Team.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (User != null ? User.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (UserName != null ? UserName.GetHashCode() : 0);
+                return hashCode;
             }
         }
     }

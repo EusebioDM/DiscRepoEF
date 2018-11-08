@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using Generic_Disconnected_Repo;
 using Generic_Disconnected_Repo_Test.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Generic_Disconnected_Repo_Test
 {
-    [TestClass]
-    public class TestInitialize
+    public class TestBase
     {
         protected Sport football;
         protected Team boca;
@@ -17,7 +17,9 @@ namespace Generic_Disconnected_Repo_Test
         protected User maradona;
         protected Encounter bocaRiver;
         protected Encounter riverTomba;
+        protected InMemoryContextFactory contextFactory;
         protected Repository<Encounter> encounterRepo;
+        protected Repository<Team> teamRepo;
 
         protected void Initialize()
         {
@@ -27,17 +29,26 @@ namespace Generic_Disconnected_Repo_Test
             tomba = CreateTombaTeam();
             messi = CreateMessiUser();
             maradona = CreateMaradonaUser();
-            bocaRiver = CreateBocaRiverEncounter();
+            bocaRiver = CreateRiverBocaEncounter();
             riverTomba = CreateRiverTombaEncounter();
+            contextFactory = new InMemoryContextFactory();
             encounterRepo = CreateEncounterRepo();
+            teamRepo = CreateTeamRepo();
+        }
+
+        private Repository<Team> CreateTeamRepo()
+        {
+            Func<DbContext, DbSet<Team>> getSet = c => ((Context) c).Teams;
+            return new Repository<Team>(getSet, contextFactory);
         }
 
         private Repository<Encounter> CreateEncounterRepo()
         {
-            throw new NotImplementedException();
+            Func<DbContext, DbSet<Encounter>> getDbSet = c => ((Context) c).Encounters;
+            return new Repository<Encounter>(getDbSet, contextFactory);
         }
 
-        protected Encounter CreateRiverTombaEncounter()
+        protected Encounter CreateRiverBocaEncounter()
         {
             
             Encounter encounter = new Encounter()
@@ -63,7 +74,7 @@ namespace Generic_Disconnected_Repo_Test
             return encounter;
         }
 
-        protected Encounter CreateBocaRiverEncounter()
+        protected Encounter CreateRiverTombaEncounter()
         {
             return new Encounter()
             {
