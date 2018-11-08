@@ -54,23 +54,27 @@ namespace Generic_Disconnected_Repo
             EntityEntry entry = context.Entry(entity);
             foreach (NavigationEntry navigation in entry.Navigations)
             {
-                if (!navigation.IsLoaded)
-                {
-                    navigation.Load();
-                    dynamic value = navigation.CurrentValue;
+                if (navigation.IsLoaded) continue;
+                
+                navigation.Load();
+                dynamic value = navigation.CurrentValue;
 
-                    if (navigation.Metadata.IsCollection())
-                    {
-                        foreach (dynamic item in value)
-                        {
-                            LoadAllPropetiesRecursively(context, item);
-                        }
-                    }
-                    else
-                    {
-                        LoadAllPropetiesRecursively(context, navigation.CurrentValue);
-                    }
+                CallRecursivelyWithPropertyValue(context, navigation, value);
+            }
+        }
+
+        private static void CallRecursivelyWithPropertyValue(DbContext context, NavigationEntry navigation, dynamic value)
+        {
+            if (navigation.Metadata.IsCollection())
+            {
+                foreach (dynamic item in value)
+                {
+                    LoadAllPropetiesRecursively(context, item);
                 }
+            }
+            else
+            {
+                LoadAllPropetiesRecursively(context, navigation.CurrentValue);
             }
         }
     }
