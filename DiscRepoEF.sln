@@ -1,5 +1,4 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
@@ -46,3 +45,4 @@ Global
 		{99A362F8-D722-48D9-9221-A5072EF3D461}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
+
