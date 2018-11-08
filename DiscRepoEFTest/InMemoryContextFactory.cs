@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Generic_Disconnected_Repo_Test
+namespace DiscRepoEFTest
 {
     public class InMemoryContextFactory : IDesignTimeDbContextFactory<Context>
     {

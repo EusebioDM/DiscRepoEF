@@ -1,7 +1,7 @@
-using Generic_Disconnected_Repo_Test.Entities;
+using DiscRepoEFTest.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Generic_Disconnected_Repo_Test
+namespace DiscRepoEFTest
 {
     public class Context : DbContext
     {

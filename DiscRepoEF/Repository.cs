@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Generic_Disconnected_Repo
+namespace DiscRepoEF
 {
     public class Repository<TEntity> where TEntity : class
     {
-        private Func<DbContext, DbSet<TEntity>> getDBSetFunc;
-        private IDesignTimeDbContextFactory<DbContext> contextFactory;
-        private EntityUpdater<TEntity> entityUpdater;
+        private readonly IDesignTimeDbContextFactory<DbContext> contextFactory;
+        private readonly EntityUpdater<TEntity> entityUpdater;
+        private readonly Func<DbContext, DbSet<TEntity>> getDBSetFunc;
 
         public Repository(Func<DbContext, DbSet<TEntity>> getDBSetFunc, IDesignTimeDbContextFactory<DbContext> contextFactory)
         {
@@ -30,11 +30,11 @@ namespace Generic_Disconnected_Repo
             }
             catch (ArgumentException e)
             {
-                throw new DataAccessException($"Object {entity} already exists in database.", e);
+                throw new DiscRepoEfException($"Object {entity} already exists in database.", e);
             }
             catch (SqlException e)
             {
-                throw new DataAccessException("Connection to database failed.", e);
+                throw new DiscRepoEfException("Connection to database failed.", e);
             }
         }
 
@@ -49,10 +49,7 @@ namespace Generic_Disconnected_Repo
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
                 TEntity fromRepo = GetEntityFromRepo(context, entity);
-                if (fromRepo != null)
-                {
-                    throw new DataAccessException("Object already exists in database.");
-                }
+                if (fromRepo != null) throw new DiscRepoEfException("Object already exists in database.");
             }
         }
 
@@ -64,11 +61,11 @@ namespace Generic_Disconnected_Repo
             }
             catch (ArgumentException e)
             {
-                throw new DataAccessException($"Object with ids {GetKeysToString(ids)} not exists in database.", e);
+                throw new DiscRepoEfException($"Object with ids {GetKeysToString(ids)} not exists in database.", e);
             }
             catch (SqlException e)
             {
-                throw new DataAccessException("Connection to database failed.", e);
+                throw new DiscRepoEfException("Connection to database failed.", e);
             }
         }
 
@@ -78,7 +75,7 @@ namespace Generic_Disconnected_Repo
             {
                 TEntity toDelete = context.Find<TEntity>(ids);
                 if (toDelete == null)
-                    throw new DataAccessException($"Object of id {GetKeysToString(ids)} does not exists in database.");
+                    throw new DiscRepoEfException($"Object of id {GetKeysToString(ids)} does not exists in database.");
                 context.Entry(toDelete).State = EntityState.Deleted;
                 context.SaveChanges();
             }
@@ -92,11 +89,11 @@ namespace Generic_Disconnected_Repo
             }
             catch (ArgumentException e)
             {
-                throw new DataAccessException($"Object with id {GetKeysToString(ids)} does not exists in database.", e);
+                throw new DiscRepoEfException($"Object with id {GetKeysToString(ids)} does not exists in database.", e);
             }
             catch (SqlException e)
             {
-                throw new DataAccessException("Connection to database failed.", e);
+                throw new DiscRepoEfException("Connection to database failed.", e);
             }
         }
 
@@ -105,10 +102,7 @@ namespace Generic_Disconnected_Repo
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
                 TEntity toReturn = Helper<TEntity>.GetEageredLoadedEntity(context, ids);
-                if (toReturn == null)
-                {
-                    throw new DataAccessException($"Object of id {GetKeysToString(ids)} does not exists in database.");
-                }
+                if (toReturn == null) throw new DiscRepoEfException($"Object of id {GetKeysToString(ids)} does not exists in database.");
 
                 return toReturn;
             }
@@ -127,7 +121,7 @@ namespace Generic_Disconnected_Repo
             }
             catch (SqlException e)
             {
-                throw new DataAccessException("Connection to database failed.", e);
+                throw new DiscRepoEfException("Connection to database failed.", e);
             }
         }
 
@@ -151,11 +145,11 @@ namespace Generic_Disconnected_Repo
             }
             catch (DbUpdateConcurrencyException e)
             {
-                throw new DataAccessException($"Object {entity} does not exists in database.", e);
+                throw new DiscRepoEfException($"Object {entity} does not exists in database.", e);
             }
             catch (SqlException e)
             {
-                throw new DataAccessException("Connection to database failed.", e);
+                throw new DiscRepoEfException("Connection to database failed.", e);
             }
         }
 
@@ -183,6 +177,9 @@ namespace Generic_Disconnected_Repo
             return context.Find<TEntity>(key.Keys.ToArray());
         }
 
-        private DbSet<TEntity> Set(DbContext context) => getDBSetFunc.Invoke(context);
+        private DbSet<TEntity> Set(DbContext context)
+        {
+            return getDBSetFunc.Invoke(context);
+        }
     }
 }

@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Generic_Disconnected_Repo
+namespace DiscRepoEF
 {
     internal class EntityUpdater<TEntity> where TEntity : class
     {
         private readonly IDesignTimeDbContextFactory<DbContext> contextFactory;
         private Queue<object> entitiesLeftToUpdate;
-        HashSet<EntityKeys> entitiesThatShouldBeInUpdate;
+        private HashSet<EntityKeys> entitiesThatShouldBeInUpdate;
 
         public EntityUpdater(IDesignTimeDbContextFactory<DbContext> contextFactory)
         {
@@ -26,10 +26,7 @@ namespace Generic_Disconnected_Repo
             entitiesThatShouldBeInUpdate = new HashSet<EntityKeys>();
             entitiesLeftToUpdate.Enqueue(entityToUpdate);
 
-            while (entitiesLeftToUpdate.Any())
-            {
-                UpdateRootEntityAndItsChildrenIfPossible();
-            }
+            while (entitiesLeftToUpdate.Any()) UpdateRootEntityAndItsChildrenIfPossible();
 
             RemoveNoLongerPresentEntities(entityToUpdate);
         }
@@ -43,6 +40,7 @@ namespace Generic_Disconnected_Repo
                 TraverseEntityGraphUpdatingWhenPossible(rootEntityToUpdate, context);
                 context.SaveChanges();
             }
+
             entitiesLeftToUpdate.Dequeue();
         }
 
@@ -60,34 +58,23 @@ namespace Generic_Disconnected_Repo
             entitiesThatShouldBeInUpdate.Add(Helper<TEntity>.GetKeys(current));
 
             if (EntryExistsInChangeTracker(context, current)) // Entity is already being tracked in a different node so the current context cant track it
-            {
                 EnqueueFatherNodeToLeftToUpdateQueue(fatherNode); // Entity will be updated in a new Conxtext in the future since it cant be tracked in the current context
-            }
             else
-            {
                 SetEntityAsModifiedOrAdded(context, current, node);
-            }
         }
 
         private void SetEntityAsModifiedOrAdded(DbContext context, EntityEntry entry, EntityEntryGraphNode node)
         {
             if (EntryExistsInDb(context, entry))
-            {
                 entry.State = EntityState.Modified;
-            }
             else
-            {
                 entry.State = EntityState.Added;
-            }
         }
 
         private void EnqueueFatherNodeToLeftToUpdateQueue(EntityEntry fatherNode)
         {
             bool canEnqueueWithoutGettingStuckInLoop = !entitiesLeftToUpdate.Contains(fatherNode.Entity);
-            if (canEnqueueWithoutGettingStuckInLoop)
-            {
-                entitiesLeftToUpdate.Enqueue(fatherNode.Entity); // Entity is added to the queue so it can be added in a different context
-            }
+            if (canEnqueueWithoutGettingStuckInLoop) entitiesLeftToUpdate.Enqueue(fatherNode.Entity); // Entity is added to the queue so it can be added in a different context
         }
 
         private bool EntryExistsInDb(DbContext context, EntityEntry entry)
@@ -102,7 +89,6 @@ namespace Generic_Disconnected_Repo
             bool exists = entriesInChangeTracker.Any(e => Helper<TEntity>.EntriesAreEqual(e, entry));
             return exists;
         }
-
 
 
         private void RemoveNoLongerPresentEntities(TEntity entity)
@@ -121,22 +107,17 @@ namespace Generic_Disconnected_Repo
         {
             EntityKeys keys = Helper<TEntity>.GetKeys(currentEntry);
             bool haventTraversedThisEntity = !alreadyTraversed.Contains(keys);
-            if (haventTraversedThisEntity)
+            if (!haventTraversedThisEntity) return;
+            
+            alreadyTraversed.Add(keys);
+            foreach (NavigationEntry property in currentEntry.Navigations)
             {
-                alreadyTraversed.Add(keys);
-                foreach (var property in currentEntry.Navigations)
-                {
-                    property.Load();
-                    dynamic propertyCurrentValue = property.CurrentValue;
-                    if (property.Metadata.IsCollection())
-                    {
-                        RemoveEntitiesFromCollectionThatWereNotPartOftheUpdateAndCallRecursively(context, propertyCurrentValue, alreadyTraversed);
-                    }
-                    else
-                    {
-                        CallThisMethodRecusivelyWithChildEntity(context, property, alreadyTraversed);
-                    }
-                }
+                property.Load();
+                dynamic propertyCurrentValue = property.CurrentValue;
+                if (property.Metadata.IsCollection())
+                    RemoveEntitiesFromCollectionThatWereNotPartOftheUpdateAndCallRecursively(context, propertyCurrentValue, alreadyTraversed);
+                else
+                    CallThisMethodRecusivelyWithChildEntity(context, property, alreadyTraversed);
             }
         }
 
@@ -153,12 +134,10 @@ namespace Generic_Disconnected_Repo
             {
                 EntityEntry entry = context.Entry(entity);
                 EntityKeys entityKey = Helper<TEntity>.GetKeys(entry);
-                if (!entitiesThatShouldBeInUpdate.Contains(entityKey))
-                {
-                    toBeDeleted.Add(entity);
-                }
+                if (!entitiesThatShouldBeInUpdate.Contains(entityKey)) toBeDeleted.Add(entity);
                 RemoveEntitiesNotInUpdateRecusively(context, entry, alreadyTraversed);
             }
+
             Action<dynamic> deleteFromCollectionOfEntities = e => entitiesThatNeedToBeFiltered.Remove(e);
             toBeDeleted.ForEach(deleteFromCollectionOfEntities);
         }

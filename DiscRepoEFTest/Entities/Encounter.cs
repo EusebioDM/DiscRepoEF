@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Generic_Disconnected_Repo_Test.Entities
+namespace DiscRepoEFTest.Entities
 {
     public class Encounter
     {

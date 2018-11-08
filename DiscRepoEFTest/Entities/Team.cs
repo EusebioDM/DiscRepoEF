@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Generic_Disconnected_Repo_Test.Entities
+﻿namespace DiscRepoEFTest.Entities
 {
     public class Team
     {

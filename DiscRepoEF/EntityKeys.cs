@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Generic_Disconnected_Repo
+namespace DiscRepoEF
 {
     internal class EntityKeys
     {
-        public IEnumerable<object> Keys => keys;
         private readonly ICollection<object> keys;
 
         public EntityKeys()
@@ -18,27 +17,24 @@ namespace Generic_Disconnected_Repo
             this.keys = keys;
         }
 
-        public void AddKey(object key) => keys.Add(key);
+        public IEnumerable<object> Keys => keys;
+
+        public void AddKey(object key)
+        {
+            keys.Add(key);
+        }
 
         public override bool Equals(object obj)
         {
             if (obj is EntityKeys other)
-            {
                 return Keys.SequenceEqual(other.Keys);
-            }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         public override int GetHashCode()
         {
             int hashCode = 0;
-            foreach (object p in keys)
-            {
-                hashCode ^= p.GetHashCode(); // XOR is used to prevent Integer Overflow
-            }
+            foreach (object p in keys) hashCode ^= p.GetHashCode(); // XOR is used to prevent Integer Overflow
 
             return hashCode;
         }

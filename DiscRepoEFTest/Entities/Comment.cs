@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Generic_Disconnected_Repo_Test.Entities
+namespace DiscRepoEFTest.Entities
 {
     public class Comment
     {

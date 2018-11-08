@@ -1,22 +1,16 @@
-﻿using System;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Generic_Disconnected_Repo
+namespace DiscRepoEF
 {
     internal static class Helper<TEntity> where TEntity : class
     {
         public static EntityKeys GetKeys(EntityEntry entry)
         {
             EntityKeys keys = new EntityKeys();
-            foreach (var propety in entry.Properties)
-            {
+            foreach (PropertyEntry propety in entry.Properties)
                 if (propety.Metadata.IsPrimaryKey())
-                {
                     keys.AddKey(propety.CurrentValue);
-                }
-            }
             return keys;
         }
 
@@ -42,7 +36,7 @@ namespace Generic_Disconnected_Repo
             LoadAllPropetiesRecursively(context, entity);
             return entity;
         }
-        
+
         public static TEntity LoadEntity(DbContext context, TEntity entity)
         {
             LoadAllPropetiesRecursively(context, entity);
@@ -55,7 +49,7 @@ namespace Generic_Disconnected_Repo
             foreach (NavigationEntry navigation in entry.Navigations)
             {
                 if (navigation.IsLoaded) continue;
-                
+
                 navigation.Load();
                 dynamic value = navigation.CurrentValue;
 
@@ -66,16 +60,10 @@ namespace Generic_Disconnected_Repo
         private static void CallRecursivelyWithPropertyValue(DbContext context, NavigationEntry navigation, dynamic value)
         {
             if (navigation.Metadata.IsCollection())
-            {
                 foreach (dynamic item in value)
-                {
                     LoadAllPropetiesRecursively(context, item);
-                }
-            }
             else
-            {
                 LoadAllPropetiesRecursively(context, navigation.CurrentValue);
-            }
         }
     }
 }

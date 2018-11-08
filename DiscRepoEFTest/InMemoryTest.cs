@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Generic_Disconnected_Repo;
-using Generic_Disconnected_Repo_Test.Entities;
+using DiscRepoEF;
+using DiscRepoEFTest.Entities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Generic_Disconnected_Repo_Test
+namespace DiscRepoEFTest
 {
     [TestClass]
     public class InMemoryTest : TestBase
@@ -117,7 +117,7 @@ namespace Generic_Disconnected_Repo_Test
         }
 
         [TestMethod]
-        [ExpectedException(typeof(DataAccessException))]
+        [ExpectedException(typeof(DiscRepoEfException))]
         public void AddAlreadyExistingEncounter()
         {
             encounterRepo.Add(bocaRiver);
@@ -125,7 +125,7 @@ namespace Generic_Disconnected_Repo_Test
         }
         
         [TestMethod]
-        [ExpectedException(typeof(DataAccessException))]
+        [ExpectedException(typeof(DiscRepoEfException))]
         public void DeleteNonExistingEncounter()
         {
             encounterRepo.Delete(bocaRiver.Id);

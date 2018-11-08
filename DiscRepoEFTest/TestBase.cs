@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Generic_Disconnected_Repo;
-using Generic_Disconnected_Repo_Test.Entities;
+using DiscRepoEF;
+using DiscRepoEFTest.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Generic_Disconnected_Repo_Test
+namespace DiscRepoEFTest
 {
     public class TestBase
     {
