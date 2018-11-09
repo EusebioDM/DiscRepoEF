@@ -7,7 +7,11 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace DiscRepoEF
 {
-    internal class EntityUpdater<TEntity> where TEntity : class
+    /// <summary>
+    /// Contains the methods needed to resolve the entity graphs that arises when working in a disconnected environment in Entity FrameWork.
+    /// </summary>
+    /// <typeparam name="TEntity">Type of the entity to update/save.</typeparam>
+    public class EntityUpdater<TEntity> where TEntity : class
     {
         private readonly IDesignTimeDbContextFactory<DbContext> contextFactory;
         private Queue<object> entitiesLeftToUpdate;
@@ -20,7 +24,11 @@ namespace DiscRepoEF
             entitiesThatShouldBeInUpdate = new HashSet<EntityKeys>();
         }
 
-        public void UpdateGraph(TEntity entityToUpdate)
+        /// <summary>
+        /// Adds or updates the entity, including all of its related entities in the database, 
+        /// </summary>
+        /// <param name="entityToUpdate">The entity to be added or updated.</param>
+        public void AddOrUpdateGraph(TEntity entityToUpdate)
         {
             entitiesLeftToUpdate = new Queue<object>();
             entitiesThatShouldBeInUpdate = new HashSet<EntityKeys>();

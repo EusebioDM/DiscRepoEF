@@ -9,19 +9,35 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace DiscRepoEF
 {
+    /// <summary>
+    /// Generic entity repository for EntityFramework Core.
+    /// Can performs the CRUD operations resolving the entity graphs that arises when working in a disconnected environment in Entity FrameWork.
+    /// </summary>
+    /// <typeparam name="TEntity"> Type that is saved in the repository, must be a reference type.</typeparam>
     public class Repository<TEntity> where TEntity : class
     {
         private readonly IDesignTimeDbContextFactory<DbContext> contextFactory;
         private readonly EntityUpdater<TEntity> entityUpdater;
-        private readonly Func<DbContext, DbSet<TEntity>> getDBSetFunc;
+        private readonly Func<DbContext, DbSet<TEntity>> dbSetGetter;
 
-        public Repository(Func<DbContext, DbSet<TEntity>> getDBSetFunc, IDesignTimeDbContextFactory<DbContext> contextFactory)
+        /// <summary>
+        /// Creates a new Repository of the given type.
+        /// </summary>
+        /// <param name="dbSetGetter">Function that returns the DbSet of the TEntity type from the context.</param>
+        /// <param name="contextFactory">Factory that crates a new context.</param>
+        public Repository(Func<DbContext, DbSet<TEntity>> dbSetGetter, IDesignTimeDbContextFactory<DbContext> contextFactory)
         {
-            this.getDBSetFunc = getDBSetFunc;
+            this.dbSetGetter = dbSetGetter;
             this.contextFactory = contextFactory;
             entityUpdater = new EntityUpdater<TEntity>(contextFactory);
         }
-
+        
+        /// <summary>
+        /// Adds the entity to the repository.
+        /// </summary>
+        /// <param name="entity">Entity to add.</param>
+        /// <exception cref="DiscRepoException">Throws when entity already exists in the repository.</exception>
+        /// <exception cref="DiscRepoConnectionException">Throws when connection to the database failed.</exception>
         public void Add(TEntity entity)
         {
             try
@@ -30,18 +46,18 @@ namespace DiscRepoEF
             }
             catch (ArgumentException e)
             {
-                throw new DiscRepoEfException($"Object {entity} already exists in database.", e);
+                throw new DiscRepoException($"Object {entity} already exists in repository.", e);
             }
             catch (SqlException e)
             {
-                throw new DiscRepoEfException("Connection to database failed.", e);
+                throw new DiscRepoConnectionException("Connection to database failed.", e);
             }
         }
 
         private void TryToAdd(TEntity entity)
         {
             ValidateEntityDoesntExistInDataBase(entity);
-            entityUpdater.UpdateGraph(entity);
+            entityUpdater.AddOrUpdateGraph(entity);
         }
 
         private void ValidateEntityDoesntExistInDataBase(TEntity entity)
@@ -49,60 +65,73 @@ namespace DiscRepoEF
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
                 TEntity fromRepo = GetEntityFromRepo(context, entity);
-                if (fromRepo != null) throw new DiscRepoEfException("Object already exists in database.");
+                if (fromRepo != null) throw new DiscRepoException("Object already exists in database.");
             }
         }
-
-        public void Delete(params object[] ids)
+        
+        /// <summary>
+        /// Deletes item from repository. 
+        /// </summary>
+        /// <param name="keys">Key or keys if the entity has a composite key of the entity to delete.</param>
+        /// <exception cref="DiscRepoException">Throws when entity with the given keys doesn't exists in the repository.</exception>
+        /// <exception cref="DiscRepoConnectionException">Throws when connection to the database failed.</exception>
+        public void Delete(params object[] keys)
         {
             try
             {
-                TryToDelete(ids);
+                TryToDelete(keys);
             }
             catch (ArgumentException e)
             {
-                throw new DiscRepoEfException($"Object with ids {GetKeysToString(ids)} not exists in database.", e);
+                throw new DiscRepoException($"Object with ids {GetKeysToString(keys)} not exists in repository.", e);
             }
             catch (SqlException e)
             {
-                throw new DiscRepoEfException("Connection to database failed.", e);
+                throw new DiscRepoConnectionException("Connection to database failed.", e);
             }
         }
 
-        private void TryToDelete(object[] ids)
+        private void TryToDelete(object[] keys)
         {
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
-                TEntity toDelete = context.Find<TEntity>(ids);
+                TEntity toDelete = context.Find<TEntity>(keys);
                 if (toDelete == null)
-                    throw new DiscRepoEfException($"Object of id {GetKeysToString(ids)} does not exists in database.");
+                    throw new DiscRepoException($"Object of id {GetKeysToString(keys)} does not exists in database.");
                 context.Entry(toDelete).State = EntityState.Deleted;
                 context.SaveChanges();
             }
         }
-
-        public TEntity Get(params object[] ids)
+        
+        /// <summary>
+        /// Returns the entity with the given keys.
+        /// </summary>
+        /// <param name="keys">They key or keys if the entity has a composite key of the entity to return.</param>
+        /// <returns>The entity with the given keys</returns>
+        /// <exception cref="DiscRepoException">Throws when entity with the given keys doesn't exists in the repository.</exception>
+        /// <exception cref="DiscRepoConnectionException">Throws when connection to the database failed.</exception>
+        public TEntity Get(params object[] keys)
         {
             try
             {
-                return TryToGet(ids);
+                return TryToGet(keys);
             }
             catch (ArgumentException e)
             {
-                throw new DiscRepoEfException($"Object with id {GetKeysToString(ids)} does not exists in database.", e);
+                throw new DiscRepoException($"Object with id {GetKeysToString(keys)} does not exists in database.", e);
             }
             catch (SqlException e)
             {
-                throw new DiscRepoEfException("Connection to database failed.", e);
+                throw new DiscRepoConnectionException("Connection to database failed.", e);
             }
         }
 
-        private TEntity TryToGet(object[] ids)
+        private TEntity TryToGet(object[] keys)
         {
             using (DbContext context = contextFactory.CreateDbContext(new string[0]))
             {
-                TEntity toReturn = Helper<TEntity>.GetEageredLoadedEntity(context, ids);
-                if (toReturn == null) throw new DiscRepoEfException($"Object of id {GetKeysToString(ids)} does not exists in database.");
+                TEntity toReturn = Helper<TEntity>.GetEageredLoadedEntity(context, keys);
+                if (toReturn == null) throw new DiscRepoException($"Object of id {GetKeysToString(keys)} does not exists in database.");
 
                 return toReturn;
             }
@@ -112,7 +141,12 @@ namespace DiscRepoEF
         {
             return string.Join("_", ids.Select(i => i.ToString()));
         }
-
+        
+        /// <summary>
+        /// Returns all entities in the repository.
+        /// </summary>
+        /// <returns>All the entities in the repository.</returns>
+        /// <exception cref="DiscRepoConnectionException">Throws when the connection to the database failed.</exception>
         public IEnumerable<TEntity> GetAll()
         {
             try
@@ -121,7 +155,7 @@ namespace DiscRepoEF
             }
             catch (SqlException e)
             {
-                throw new DiscRepoEfException("Connection to database failed.", e);
+                throw new DiscRepoConnectionException("Connection to database failed.", e);
             }
         }
 
@@ -136,7 +170,13 @@ namespace DiscRepoEF
                     .ToList();
             }
         }
-
+        
+        /// <summary>
+        /// Updates the entity in the repository.
+        /// </summary>
+        /// <param name="entity">Entity with the updated values.</param>
+        /// <exception cref="DiscRepoException">Throws when entity with the given keys doesn't exists in the repository.</exception>
+        /// <exception cref="DiscRepoConnectionException">Throws when the connection to the database failed.</exception>
         public void Update(TEntity entity)
         {
             try
@@ -145,17 +185,17 @@ namespace DiscRepoEF
             }
             catch (DbUpdateConcurrencyException e)
             {
-                throw new DiscRepoEfException($"Object {entity} does not exists in database.", e);
+                throw new DiscRepoException($"Object {entity} does not exists in database.", e);
             }
             catch (SqlException e)
             {
-                throw new DiscRepoEfException("Connection to database failed.", e);
+                throw new DiscRepoConnectionException("Connection to database failed.", e);
             }
         }
 
         private void TryToUpdate(TEntity entity)
         {
-            entityUpdater.UpdateGraph(entity);
+            entityUpdater.AddOrUpdateGraph(entity);
         }
 
         private TEntity CreateEntity(TEntity id)
@@ -179,7 +219,7 @@ namespace DiscRepoEF
 
         private DbSet<TEntity> Set(DbContext context)
         {
-            return getDBSetFunc.Invoke(context);
+            return dbSetGetter.Invoke(context);
         }
     }
 }

@@ -117,7 +117,7 @@ namespace DiscRepoEFTest
         }
 
         [TestMethod]
-        [ExpectedException(typeof(DiscRepoEfException))]
+        [ExpectedException(typeof(DiscRepoException))]
         public void AddAlreadyExistingEncounter()
         {
             encounterRepo.Add(bocaRiver);
@@ -125,7 +125,7 @@ namespace DiscRepoEFTest
         }
         
         [TestMethod]
-        [ExpectedException(typeof(DiscRepoEfException))]
+        [ExpectedException(typeof(DiscRepoException))]
         public void DeleteNonExistingEncounter()
         {
             encounterRepo.Delete(bocaRiver.Id);
