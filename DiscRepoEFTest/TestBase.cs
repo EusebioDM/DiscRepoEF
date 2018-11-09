@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DiscRepoEF;
 using DiscRepoEFTest.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace DiscRepoEFTest
 {
@@ -16,7 +17,7 @@ namespace DiscRepoEFTest
         protected User maradona;
         protected Encounter bocaRiver;
         protected Encounter riverTomba;
-        protected InMemoryContextFactory contextFactory;
+        protected IDesignTimeDbContextFactory<Context> contextFactory;
         protected Repository<Encounter> encounterRepo;
         protected Repository<Team> teamRepo;
 
